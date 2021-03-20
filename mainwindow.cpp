@@ -83,7 +83,8 @@ void MainWindow::on_listView_clicked(const QModelIndex &index)
     QTextStream in(&file);
     QString tmp=in.readAll(),lyric; int p=62;
     tmp.replace(QString("\\n"),QString("\n"));
-    if (tmp[62]!='[') {ui->textEdit->setText("无歌词"); return;}
+    if (tmp[62]!='[') ui->textEdit->setText("无歌词");
+    else{
     for (int i=62;i<tmp.length()-3;i++) if (tmp.mid(i,3)=="\",\""){
         lyric+=tmp.mid(p,i-62); p=i; break;
     }//读取原歌词
@@ -98,8 +99,7 @@ void MainWindow::on_listView_clicked(const QModelIndex &index)
         for (;i<tmp.length()-3;i++) if (tmp.mid(i,3)=="\",\""){lyric+=tmp.mid(p,i-p); break;}
         break;
     }//读取翻译
-
-    ui->textEdit->setText(lyric);
+    ui->textEdit->setText(lyric);}
     ui->label->setText(file.fileName());
 
     QHostInfo::lookupHost("music.163.com",this,SLOT(ifonline(QHostInfo)));

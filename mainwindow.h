@@ -6,7 +6,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
-
+#include <QHostInfo>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -28,6 +28,6 @@ public slots:
     void on_close_button_clicked();
     void on_listView_clicked(const QModelIndex &index);
     void getweb(QNetworkReply *reply);
-
+    void ifonline(QHostInfo host);
 };
 #endif // MAINWINDOW_H

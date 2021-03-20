@@ -8,6 +8,7 @@
 #include <QTextCodec>
 
 
+
 QWidget *publicwidget;
 QFile file;
 QDir cache_dir("/sdcard/netease/cloudmusic/Cache/Lyric/"),download_dir("/sdcard/netease/cloudmusic/Download/Lyric/");
@@ -73,17 +74,45 @@ void MainWindow::on_close_button_clicked()
     publicwidget->close();
 }
 
+QString id;
+
 void MainWindow::on_listView_clicked(const QModelIndex &index)
-{
+{   id=index.data().toString();
     file.setFileName(cache_dir.path()+"/"+index.data().toString());
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream in(&file);
-    QString lyric=in.readAll();
-    lyric.replace(QString("\\n"),QString("\n"));
+    QString tmp=in.readAll(),lyric; int p=62;
+    tmp.replace(QString("\\n"),QString("\n"));
+    if (tmp[62]!='[') {ui->textEdit->setText("无歌词"); return;}
+    for (int i=62;i<tmp.length()-3;i++) if (tmp.mid(i,3)=="\",\""){
+        lyric+=tmp.mid(p,i-62); p=i; break;
+    }//读取原歌词
+    for (int i=p;i<tmp.length()-3;i++) if (tmp.mid(i,7)=="romeLrc"){
+        i+=10; p=i;
+        for (;i<tmp.length()-3;i++) if (tmp.mid(i,3)=="\",\""){lyric+=tmp.mid(p,i-p); break;}
+        break;
+    }//读取罗马音标
+    for (int i=p;i<tmp.length()-3;i++) if (tmp.mid(i,5)=="Lyric"){
+        i+=11;
+        for(;i<tmp.length()-3;i++) if (tmp[i]==']'){p=i; break;}
+        for (;i<tmp.length()-3;i++) if (tmp.mid(i,3)=="\",\""){lyric+=tmp.mid(p,i-p); break;}
+        break;
+    }//读取翻译
+
     ui->textEdit->setText(lyric);
     ui->label->setText(file.fileName());
-    QNetworkAccessManager *url=new QNetworkAccessManager(this);
-    connect(url, SIGNAL(finished(QNetworkReply    *)), this, SLOT(getweb(QNetworkReply*)));
-    url->get(QNetworkRequest(QUrl("http://music.163.com/api/song/detail/?id="+index.data().toString()+"&ids=["+index.data().toString()+"]")));
+
+    QHostInfo::lookupHost("music.163.com",this,SLOT(ifonline(QHostInfo)));
+
+}
+
+void MainWindow::ifonline(QHostInfo host){
+    if (host.error() != QHostInfo::NoError) {ui->label_2->setText("无法连接至网易云服务器");ui->statusbar->showMessage("无法连接至网易云服务器");}
+    else {
+        QNetworkAccessManager *url=new QNetworkAccessManager(this);
+        connect(url, SIGNAL(finished(QNetworkReply    *)), this, SLOT(getweb(QNetworkReply*)));
+        url->get(QNetworkRequest(QUrl("http://music.163.com/api/song/detail/?id="+id+"&ids=["+id+"]")));
+
+    }
 
 }
